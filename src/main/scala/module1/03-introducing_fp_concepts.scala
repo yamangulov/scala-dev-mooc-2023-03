@@ -220,9 +220,9 @@ object hof{
      * Реализовать метод printIfAny, который будет печатать значение, если оно есть
      */
 
-    def printIfAny: Any = this match {
+    def printIfAny: Unit = this match {
       case Option.Some(value) => print(value)
-      case Option.None => Unit
+      case Option.None =>
     }
 
     /**
@@ -284,27 +284,10 @@ object hof{
 
      // таким способом мне удалось реализовать только список с типом B >: T
      def cons[B >: T](el: B): List[B] = this match {
-       case List.::(head, tail) => List.::(el, List.::(head, tail))
+       case List.::(head, tail) => List.::(el, this)
        case List.Nil => List.::(el, List.Nil)
      }
 
-     // а вот так вполне получается вернуть список исходного типа Т,
-     // но добавляемый элемент должен быть с супертипом от T
-     def cons_v2[B >: T](el: B): List[T] = {
-       @tailrec
-       def loop(list: List[T], acc: List[T]): List[T] = this match {
-         case List.::(head, tail) => loop(tail, List.::(head, acc) )
-         case List.Nil => acc
-       }
-
-       this match {
-         case List.::(head, tail) => {
-           val lst: List[T] = List.::(el, List.Nil)
-           loop(this, lst)
-         }
-         case List.Nil => List.::(el, List.Nil)
-       }
-     }
 
      /**
       * Метод mkString возвращает строковое представление списка, с учетом переданного разделителя
