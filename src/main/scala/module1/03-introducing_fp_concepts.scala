@@ -285,6 +285,19 @@ object hof{
        case List.::(head, tail) => List.::(el, this)
        case List.Nil => List.::(el, List.Nil)
      }
+    }
+
+    object List{
+      case class ::[A](head: A, tail: List[A]) extends List[A]
+      case object Nil extends List[Nothing]
+
+      def apply[A](v: A*): List[A] =
+        if(v.isEmpty) List.Nil
+        else ::(v.head, apply(v.tail:_*))
+    }
+
+   List(1, 2, 3, 4)
+
 
       /**
        * Метод mkString возвращает строковое представление списка, с учетом переданного разделителя
