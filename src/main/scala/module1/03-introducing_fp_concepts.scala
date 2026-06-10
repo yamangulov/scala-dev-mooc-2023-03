@@ -276,17 +276,24 @@ object hof{
     * Cons - непустой, содердит первый элемент (голову) и хвост (оставшийся список)
     */
 
-    trait List[+T]{
-     /**
-      * Метод cons, добавляет элемент в голову списка, для этого метода можно воспользоваться названием `::`
-      *
-      */
-
-     // таким способом мне удалось реализовать только список с типом B >: T
+    sealed trait List[+T]{
      def cons[B >: T](el: B): List[B] = this match {
        case List.::(head, tail) => List.::(el, this)
        case List.Nil => List.::(el, List.Nil)
      }
+    }
+
+    object List{
+      case class ::[A](head: A, tail: List[A]) extends List[A]
+      case object Nil extends List[Nothing]
+
+      def apply[A](v: A*): List[A] =
+        if(v.isEmpty) List.Nil
+        else ::(v.head, apply(v.tail:_*))
+    }
+
+   List(1, 2, 3, 4)
+
 
 
      /**
