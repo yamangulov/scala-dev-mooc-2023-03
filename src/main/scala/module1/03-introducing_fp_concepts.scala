@@ -74,11 +74,13 @@ object recursion {
   def factRec(n: Int): Int =
     if(n <= 0) 1 else n * factRec(n - 1)
 
+  // Исправлено: в рекурсивном вызове использовался n * acc вместо i * acc, 
+  // что приводило к неправильному вычислению факториала при каждом шаге рекурсии
   def factRecTail(n: Int): Int = {
     @tailrec
     def loop(i: Int, acc: Int): Int = {
       if(i <= 0) acc
-      else loop(i - 1, n * acc)
+      else loop(i - 1, i * acc)
     }
     loop(n, 1)
   }
@@ -195,11 +197,8 @@ object hof{
    * Реализовать структуру данных Option, который будет указывать на присутствие либо отсутсвие результата
    */
 
-  // Animal -> Dog
-  // Covariant + отношения переносятся на контейнер
-  // Contravariant - отношения переносятся на контейнер наоборот
-  // Invariant - нет отношений
-  type Dog
+  // Удалено: неиспользуемый абстрактный type Dog и комментарии о variance, 
+  // которые не относятся к реализации Option и вызывали ошибку компиляции
 
   sealed trait Option[+T]{
     def isEmpty: Boolean = this match {
@@ -267,6 +266,11 @@ object hof{
 
  }
 
+ // Исправлено: методы mkString, reverse, map, filter, incList, shoutString 
+ // были определены внутри object list, но использовали this и тип T, 
+ // которые не были доступны в этом контексте. Перемещены внутрь trait List, 
+ // где this ссылается на экземпляр списка, а тип T определен как параметр трейта.
+ // Также удален дублирующийся object List.
  object list {
    /**
     *
@@ -281,114 +285,85 @@ object hof{
        case List.::(head, tail) => List.::(el, this)
        case List.Nil => List.::(el, List.Nil)
      }
-    }
 
-    object List{
-      case class ::[A](head: A, tail: List[A]) extends List[A]
-      case object Nil extends List[Nothing]
+      /**
+       * Метод mkString возвращает строковое представление списка, с учетом переданного разделителя
+       *
+       */
 
-      def apply[A](v: A*): List[A] =
-        if(v.isEmpty) List.Nil
-        else ::(v.head, apply(v.tail:_*))
-    }
+      def mkString[A](sep: A): String = {
 
-   List(1, 2, 3, 4)
+        @tailrec
+        def loop(list: List[T], acc: String): String = list match {
+          case List.::(head, tail) =>
+            if(acc.isEmpty) loop(tail, s"$head")
+            else loop(tail, s"$acc$sep$head")
+          case List.Nil => acc
+        }
 
-
-
-     /**
-      * Метод mkString возвращает строковое представление списка, с учетом переданного разделителя
-      *
-      */
-
-     def mkString[A](sep: A): String = {
-
-       @tailrec
-       def loop(list: List[T], acc: String): String = list match {
-         case List.::(head, tail) =>
-           if(acc.isEmpty) loop(tail, s"$head")
-           else loop(tail, s"$acc$sep$head")
-         case List.Nil => acc
-       }
-
-       this match {
-         case List.::(head, tail) => loop(tail, "")
-         case List.Nil => ""
-       }
-     }
-
-     /**
-      *
-      * Реализовать метод reverse который позволит заменить порядок элементов в списке на противоположный
-      */
-
-     //добавляем к аккумулятору спереди сначала голову от списка, а потом голову от остатка списка и так далее в цикле
-     def reverse(): List[T] = {
-       @tailrec
-       def loop(list: List[T], acc: List[T]): List[T] = list match {
-         case List.::(head, tail) => loop(tail, List.::(head, acc))
-         case List.Nil => acc
-       }
-
-       this match {
-         case List.::(head, tail) => loop(tail, List.::(head, List.Nil))
-         case List.Nil => List.Nil
-       }
-     }
-
-     /**
-      *
-      * Реализовать метод map для списка который будет применять некую ф-цию к элементам данного списка
-      */
-
-     def map[B](f: T => B): List[B] = {
-      @tailrec
-      def loop(list: List[T], acc: List[B]): List[B] = list match {
-        case List.::(head, tail) => loop(tail, List.::(f(head), acc))
-        case List.Nil => acc
+        this match {
+          case List.::(head, tail) => loop(tail, "")
+          case List.Nil => ""
+        }
       }
 
-      this match {
-        case List.::(head, tail) => loop(tail, List.::(f(head), List.Nil))
-        case List.Nil => List.Nil
+      /**
+       *
+       * Реализовать метод reverse который позволит заменить порядок элементов в списке на противоположный
+       */
+
+      //добавляем к аккумулятору спереди сначала голову от списка, а потом голову от остатка списка и так далее в цикле
+      def reverse(): List[T] = {
+        @tailrec
+        def loop(list: List[T], acc: List[T]): List[T] = list match {
+          case List.::(head, tail) => loop(tail, List.::(head, acc))
+          case List.Nil => acc
+        }
+
+        this match {
+          case List.::(head, tail) => loop(tail, List.::(head, List.Nil))
+          case List.Nil => List.Nil
+        }
       }
 
-     }
+      /**
+       *
+       * Реализовать метод map для списка который будет применять некую ф-цию к элементам данного списка
+       */
 
-     /**
-      *
-      * Реализовать метод filter для списка который будет фильтровать список по некому условию
-      */
-
-     def filter(f: T => Boolean): List[T] = {
+      def map[B](f: T => B): List[B] = {
        @tailrec
-       def loop(list: List[T], acc: List[T]): List[T] = list match {
-         case List.::(head, tail) => loop(tail, if (f(head)) List.::(head, acc) else acc)
+       def loop(list: List[T], acc: List[B]): List[B] = list match {
+         case List.::(head, tail) => loop(tail, List.::(f(head), acc))
          case List.Nil => acc
        }
 
        this match {
-         case List.::(head, tail) => loop(tail, if (f(head)) List.::(head, List.Nil) else List.Nil)
+         case List.::(head, tail) => loop(tail, List.::(f(head), List.Nil))
          case List.Nil => List.Nil
        }
-     }
 
-     /**
-      *
-      * Написать функцию incList котрая будет принимать список Int и возвращать список,
-      * где каждый элемент будет увеличен на 1
-      */
+      }
 
-     def incList(list: List[Int]): List[Int] = list.map[Int](x => x + 1)
+      /**
+       *
+       * Реализовать метод filter для списка который будет фильтровать список по некому условию
+       */
 
-     /**
-      *
-      * Написать функцию shoutString котрая будет принимать список String и возвращать список,
-      * где к каждому элементу будет добавлен префикс в виде '!'
-      */
+      def filter(f: T => Boolean): List[T] = {
+        @tailrec
+        def loop(list: List[T], acc: List[T]): List[T] = list match {
+          case List.::(head, tail) => loop(tail, if (f(head)) List.::(head, acc) else acc)
+          case List.Nil => acc
+        }
 
-     def shoutString(list: List[String]): List[String] = list.map[String](x => "!" + x)
-   }
+        this match {
+          case List.::(head, tail) => loop(tail, if (f(head)) List.::(head, List.Nil) else List.Nil)
+          case List.Nil => List.Nil
+        }
+      }
+
+    }
 
     object List{
       case class ::[A](head: A, tail: List[A]) extends List[A]
@@ -408,6 +383,20 @@ object hof{
 
    List(1, 2, 3, 4)
 
+   /**
+    *
+    * Написать функцию incList котрая будет принимать список Int и возвращать список,
+    * где каждый элемент будет увеличен на 1
+    */
 
+   def incList(list: List[Int]): List[Int] = list.map[Int](x => x + 1)
+
+   /**
+    *
+    * Написать функцию shoutString котрая будет принимать список String и возвращать список,
+    * где к каждому элементу будет добавлен префикс в виде '!'
+    */
+
+   def shoutString(list: List[String]): List[String] = list.map[String](x => "!" + x)
 
  }
