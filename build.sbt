@@ -1,5 +1,5 @@
 
-scalaVersion := "2.13.8"
+scalaVersion := "2.13.14"
 
 name := "scala-dev-mooc-2023-03"
 organization := "ru.otus"
